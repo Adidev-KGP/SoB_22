@@ -57,9 +57,13 @@ class MerkleTreeHash(object):
             #This is so that we can concatenate them and create a new 
             #hash from them.
             
-            hasher = hashlib.sha256()
-            hasher.update(k[0].encode('utf-8')+k[1].encode('utf-8'))
-            secondary.append(hasher.hexdigest())
+            token=k[0]+k[1]
+            d = (hashlib.sha256(token.encode('utf-8')).hexdigest())
+            secondary.append(d)
+            
+            #The sha256 strings are directly concatenated
+            #and their sha256 is produced again to get the 
+            #next node of the Merkle Tree
             
         #Now because this is a recurssive method, we need to determine when
         #we only have a single item in the list . This marks the end of the 
@@ -72,6 +76,7 @@ class MerkleTreeHash(object):
             #need to iterate through this so we pass it back to the 
             #method. We pass the secondary list since it holds the second
             #iteration results.
+            
             return self.find_merkle_hash(secondary)
             
 
@@ -130,20 +135,26 @@ class MerkleTreeHash(object):
             #This is so that we can concatenate them and create a new 
             #hash from them.
             
-            hasher = hashlib.sha256()
-            hasher.update(k[0].encode('utf-8')+k[1].encode('utf-8'))
-            secondary.append(hasher.hexdigest())
+            token=k[0]+k[1]
+            d = (hashlib.sha256(token.encode('utf-8')).hexdigest())
+            secondary.append(d)
+            
+            #The sha256 strings are directly concatenated
+            #and their sha256 is produced again to get the 
+            #next node of the Merkle Tree
             
             #Now we have to compare if the target hash is present
             #in the pair of hashes that are to be concatenated
             
             if(target_hash==k[0]):
-                proof.append(k[1]) #The hash which does not match with the target hash in the pair is appended to the proof
                 
-                target_hash=hasher.hexdigest()
+                proof.append(k[1]) #The hash which does not match with the target hash in the pair is appended to the proof
+                target_hash=d
+                
             elif(target_hash==k[1]):
+                
                 proof.append(k[0]) #The hash which does not match with the target hash in the pair is appended to the proof
-                target_hash=hasher.hexdigest()
+                target_hash=d
             
         
     
@@ -164,9 +175,11 @@ if __name__ == '__main__':
     
     
     for i in range(0,n):
-        file_hashes.append(str(uuid.uuid4().hex))
+        token = uuid.uuid4()
+        d = (hashlib.sha256(token.bytes).hexdigest())
+        file_hashes.append(d)
+
         
-    
     print('Finding the merkle tree hash of {0} random hashes'.format(len(file_hashes)))
        
     cls=MerkleTreeHash() #creating instance of the class MerkleTreeHash
@@ -174,17 +187,24 @@ if __name__ == '__main__':
     mk = cls.find_merkle_hash(file_hashes)
     
     proof = []
-    mp = cls.find_merkle_proof(file_hashes,file_hashes[2],proof)
+    
+    
+    mp = cls.find_merkle_proof(file_hashes,file_hashes[0],proof)
     
     #Printing the results
     
     print('The merkle tree hash of the hashes below is : {0}'.format(mk))
     print('....')
     
-    print (file_hashes)
+    print (format(file_hashes))
     
     print("....")
     
-    print('The merkle proof of the Target Hash is :\n')
-    print('{0}'.format(mp))
+    num=int(input("Enter the file number you want the proof for"))
+    
+    if(num<=n):
+      print('The merkle proof of the Target Hash is :\n')
+      print('{0}'.format(mp))
+    else:
+        print("Invalid request :(")
         
