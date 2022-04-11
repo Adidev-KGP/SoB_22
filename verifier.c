@@ -1,66 +1,61 @@
-#include<stdio.h>
-#include<string.h>
-#include<math.h>
-#include <limits.h>
-#define mod ULONG_MAX
-#define int unsigned long long int
-#define mth ['A','B'] //  this line stores the Merkle Tree Hash in mth
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <sys/stat.h>
+#include <string.h>
+#include "../sha256.h"
 
-/* Iterative Function to calculate (x^y)%p in O(log y) */
-int power(int x,int y,int p)
+
+//array mth stores the Merkle Tree Hash
+char mth[]="149F173B07EDBAD8DF5BA7EA5FAD18852384FD3CBAD0FE8665687020739281BA"
+
+int main(int argc, char *argv[])
 {
-    int res = 1;     // Initialize result
- 
-    x = x % p; // Update x if it is more than or
-                // equal to p
-  
-    if (x == 0) return 0; // In case x is divisible by p;
- 
-    while (y > 0)
-    {
-        // If y is odd, multiply x with result
-        if (y & 1)
-            res = (res*x) % p;
- 
-        // y must be even now
-        y = y>>1; // y = y/2
-        x = (x*x) % p;
-    }
-    return res;
-}
- 
-int hextodc(char *hex){ // converts hexadecimal to decimal
-  int y = 0;
-  int dec = 0;
-  int x, i;
-  for(i = strlen(hex) - 1 ; i >= 0 ; --i){
-      if(hex[i]>='0'&&hex[i]<='9'){
-         x = hex[i] - '0';
-      }
-      else{
-         x = hex[i] - 'A' + 10;
-      }
-      dec = (dec%mod) + ((x%mod) * power(16 , y,mod))%mod;
-      dec%=mod;
-      y++;// converting hexadecimal to integer value ++y;
-      //printf("%d",dec);printf("\n");
-  }
-  return ((dec%mod)+(mod))%mod;
-}
-int main(){
+	char *Data = {
+					"Let us",
+					"do something",
+					"interesting",
+					"this summer"};
+						
+	uint8_t DataSize[] = {6,12 , 11, 11};
+	
+	char *merkle_proof[] = {"F57471A3FCF40ABA631A64EC31DC5BAEBC511EE86F0B8193F02884B209227829" ,
+	                         "FC283FDC2C82B775CFD1A1EDD61D12E133D4CF0B15ABCD89B8B3768144ACC8AE"};
+						
     
-  int n;
-  int sum=0;
-  scanf("%lld",n)// this line takes number of hashes in merkle proof which can also be derived as ceil(log2(no. of initial hashes))
-  for(int i=0;i<n;i++){
-     char hex[100];
-     printf("Enter Hexadecimal: ");
-     scanf("%s", hex);
-     int hex1 = hextodc(hex);
-     sum=((sum%mod)+hex1)%mod;
-    }
-//   printf("\nDecimal: %llu", hextodc(hex));
-//   return 0;
-    if(hextodc(mth)==sum) printf("The file is correct");
-    else printf("The file is incorrect or has been modified");
+	
+	printf("\nTesting function: sha256_data()\n");
+	printf("Number of tests: 2\n");
+	
+	char target_file[64]="interesting";
+	int target_file_size = 11;
+	target_file_hash = sha256_data(target_file, target_file_size, NOT_VERBOSE);
+	
+	for(int i = 0; i < 2; i++)
+	{
+		//Computing sha256
+		
+		strcat(target_file_hash,merkle_proof[i]); //concatenating the sha256 hashes to get the next node
+		target_file_hash = sha256_data(target_file_hash,target_file_size+DataSize[i],NOT_VERBOSE);
+		target_file_size+=DataSize[i];
+	    
+	    int c=0;
+	
+		for(int j = 0; j < 64; j++)
+		{
+			if(target_file_hash[j] == mth[j])
+			{
+				c++;
+				
+			}
+			else
+			{
+				printf("File is corrupt");
+			}
+		}if(c==64)printf("The file is correct");
+		
+		
+	}
+	
+	return 0;
 }
