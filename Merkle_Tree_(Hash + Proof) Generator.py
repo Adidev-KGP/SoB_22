@@ -127,8 +127,6 @@ class MerkleTreeHash(object):
         
         secondary = []
         
-        
-        
         for k in [blocks[x:x+2] for x in range(0, len(blocks),2)]:
             
             #Note: k is a list with only 2 items, which is what we want.
@@ -156,12 +154,8 @@ class MerkleTreeHash(object):
                 proof.append(k[0]) #The hash which does not match with the target hash in the pair is appended to the proof
                 target_hash=d
             
-        
-    
         return self.find_merkle_proof(secondary,target_hash,proof)
         
-
-
 ############################################################################################################################################
         
     
@@ -171,40 +165,144 @@ if __name__ == '__main__':
     #hashes and try to find their merkle tree hash.
     n=int(input("Enter the number of files"))
     import uuid
-    file_hashes = []
     
+    file_hashes = []
+    hashes_near_power_2 = []
+    hashes_after_near_power_2 = []
+    
+    cls=MerkleTreeHash() #creating an instance of class
+    
+    
+    k= 0;
+    while((1<<k)<n):
+        k+=1
+    k-=1
+    
+    #where pow(2,k)<n and k is the largest possible number to satisfy this condition
+    
+    c=0 #counter variable
     
     for i in range(0,n):
         token = uuid.uuid4()
         d = (hashlib.sha256(token.bytes).hexdigest())
         file_hashes.append(d)
+        if(c<=(1<<k)):
+            hashes_near_power_2.append(d)
+        else:
+            hashes_after_near_power_2.append(d)
+            
+            
+    #root_hash_1 stores the Merkle Root Hash that is formed from the pow(2,k)
+    #number of hashes which is a subset of the initial given Merkle Tree
+    
+    root_hash_1 = cls.find_merkle_hash(hashes_near_power_2) 
+ 
+################################################  replace_leaf  ############################################################################   
+    #replace_leaf takes 2 parameters:
+    #1) index: the index which is to be replaced
+    #2) the hash value with which that particular index has to be replaced
 
+    def replace_leaf(index , new_hash):
+        #merkle_proof_old stores the Merkle Root Hash of the initial Merkle Tree
         
-    print('Finding the merkle tree hash of {0} random hashes'.format(len(file_hashes)))
+        proof= []
+        
+        merkle_proof_old = cls.find_merkle_proof(file_hashes,file_hashes[index],proof)
+        
+        #Now the Merkle Tree that is stored in file_hashes is updated with the new_hash
+        
+        file_hashes[index] = new_hash
+        
+        #new_file_set_hash_with_proof_hash stores the
+        #1) new_hash
+        #2) followed by the old Merkle Proof of the index
+        #Together with the old Merkle Proof and new_hash the new Merkle Root Hash can be generated
+        
+        new_file_set_hash_with_proof_hash = []
+        
+        new_file_set_hash_with_proof_hash.append(new_hash)
+        
+        #new_file_set_hash_with_proof_hash is now storing the old Merkle Proof of index
+        
+        for i in range(0,len(merkle_proof_old)):
+            new_file_set_hash_with_proof_hash.append(merkle_proof_old[i])
+            
+        
+        new_root_hash = cls.find_merkle_hash(new_file_set_hash_with_proof_hash)
+        
+        return new_root_hash
+################################################  replace_leaf  ############################################################################
+
+################################################  append_new_hashes ############################################################################
+
+    #append_new_hashes takes two parameters
+    #1) the number of hashes to be added to the Merkle Tree ,k
+    #2) the list of hashes which are to be added to the old Merkle Tree
        
-    cls=MerkleTreeHash() #creating instance of the class MerkleTreeHash
-    
-    mk = cls.find_merkle_hash(file_hashes)
-    
-    proof = []
-    
-    
-    mp = cls.find_merkle_proof(file_hashes,file_hashes[0],proof)
+    def append_new_hashes(k , hash_list):
+        
+        file_hashes.extend(hash_list)  # to make sure that the Merkle Tree is udated
+        
+        #hashes_after_near_power_2 is now updates with the hash_list
+        hashes_after_near_power_2.extend(hash_list)
+       
+        #the Merkle Tree Hash of hashes_after_near_power_2 is generated as root_hash_2
+        root_hash_2 = cls.find_merkle_hash(hashes_after_near_power_2)
+        
+        #the concatenation of root_hash_1 and root_hash_2 gives the final updated Merkle Tree Hash
+        token = root_hash_1 + root_hash_2
+        return (hashlib.sha256(token.encode('utf-8')).hexdigest())
+        
+        
+################################################  append_new_hashes  ############################################################################
+                 
     
     #Printing the results
     
-    print('The merkle tree hash of the hashes below is : {0}'.format(mk))
     print('....')
-    
-    print (format(file_hashes))
-    
     print("....")
+
+    print("The initial hashes are : {0}".format(file_hashes))
     
-    num=int(input("Enter the file number you want the proof for"))
+    ch = int(input('''Enter your choice:
+                   1:Find the Merkle Root Hash
+                   2:Find the Merkle Proof of a particular leaf in Merkle tree
+                   3:Replace a particular leaf in Merkle Tree with other hash and get the new Merkle Root hash
+                   4:Add new hashes to the existing Merkle Tree'''))
     
-    if(num<=n):
-      print('The merkle proof of the Target Hash is :\n')
-      print('{0}'.format(mp))
-    else:
-        print("Invalid request :(")
+    cls=MerkleTreeHash()
+    
+    if(ch ==1):
+        mk = cls.find_merkle_hash(file_hashes)
+        print('Finding the merkle tree hash of {0} random hashes'.format(len(file_hashes)))
+        print('The merkle Root hash of the hashes below is : {0}'.format(mk))
+        
+    elif(ch == 2):
+        proof = []
+        num=int(input("Enter the file number you want the proof for"))
+    
+        if(num<=n):
+            mp = cls.find_merkle_proof(file_hashes,file_hashes[num-1],proof)
+             print('The merkle proof of the Target Hash is :\n')
+             print('{0}'.format(mp))
+        else:
+             print("Invalid request :(")
+             
+    elif(ch == 3):
+        index = int(input("Enter the index of the leaf you want to replace"))
+        if(index<n):
+            new_hash = input("Enter the hash you want to replace with")
+            print(replace_leaf(index , new_hash))
+        else:
+            print("Invalid response :(")
+            
+    elif(ch == 4):
+        
+        k =int(input("Enter the number of hashes you want to append"))
+        hash_list = []
+        for i in range(0,k):
+            z = input("Enter the hash")
+            hash_list.append(z)
+        print(append_new_hashes(k,hash_list))
+        
         
