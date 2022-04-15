@@ -6,9 +6,9 @@
 #include "sha256.h"
 #include "prog_bar.h"
 
-#define DEBUG_FLAG			0
+#define DEBUG_FLAG       0
 
-#define BLOCK_SIZE_BYTE		64
+#define BLOCK_SIZE_BYTE	 64
 
 
 //==============================================================================
