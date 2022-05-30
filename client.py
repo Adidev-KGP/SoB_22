@@ -244,7 +244,7 @@ if __name__ == '__main__':
         file_hashes.extend(hash_list)  # to make sure that the Merkle Tree is udated
         
         #hashes_after_near_power_2 is now updates with the hash_list
-        hashes_after_near_power_2.extend(hash_list)
+        hashes_after_near_power_2.extend(hash_list)   #error --> resolve it
        
         #the Merkle Tree Hash of hashes_after_near_power_2 is generated as root_hash_2
         root_hash_2 = cls.find_merkle_hash(hashes_after_near_power_2)
